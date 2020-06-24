@@ -14,6 +14,9 @@ Unicode true
 !define WEASEL_BUILD 0
 !endif
 
+; The default installation directory
+InstallDir $LOCALAPPDATA\Programs\Rime
+
 !define WEASEL_ROOT $INSTDIR\weasel-${WEASEL_VERSION}
 
 ; The name of the installer
@@ -33,15 +36,12 @@ VIAddVersionKey /LANG=2052 "FileVersion" "${WEASEL_VERSION}"
 !define MUI_ICON ..\resource\weasel.ico
 SetCompressor /SOLID lzma
 
-; The default installation directory
-InstallDir $PROGRAMFILES\Rime
-
 ; Registry key to check for directory (so if you install again, it will
 ; overwrite the old one automatically)
-InstallDirRegKey HKLM "Software\Rime\Weasel" "InstallDir"
+InstallDirRegKey HKCU "Software\Rime\Weasel" "InstallDir"
 
 ; Request application privileges for Windows Vista
-RequestExecutionLevel admin
+RequestExecutionLevel user
 
 ;--------------------------------
 
@@ -66,7 +66,7 @@ RequestExecutionLevel admin
 ;--------------------------------
 
 Function .onInit
-  ReadRegStr $R0 HKLM \
+  ReadRegStr $R0 HKCU \
   "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" \
   "UninstallString"
   StrCmp $R0 "" done
@@ -80,7 +80,7 @@ Function .onInit
 
 uninst:
   ; Backup data directory from previous installation, user files may exist
-  ReadRegStr $R1 HKLM SOFTWARE\Rime\Weasel "WeaselRoot"
+  ReadRegStr $R1 HKCU SOFTWARE\Rime\Weasel "WeaselRoot"
   StrCmp $R1 "" call_uninstaller
   IfFileExists $R1\data\*.* 0 call_uninstaller
   CreateDirectory $TEMP\weasel-backup
@@ -99,7 +99,7 @@ Section "Weasel"
   SectionIn RO
 
   ; Write the new installation path into the registry
-  WriteRegStr HKLM SOFTWARE\Rime\Weasel "InstallDir" "$INSTDIR"
+  WriteRegStr HKCU SOFTWARE\Rime\Weasel "InstallDir" "$INSTDIR"
 
   ; Reset INSTDIR for the new version
   StrCpy $INSTDIR "${WEASEL_ROOT}"
@@ -180,14 +180,14 @@ program_files:
   ExecWait "$INSTDIR\WeaselDeployer.exe /install"
 
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "DisplayName" "小狼毫輸入法"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "NoModify" 1
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "NoRepair" 1
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "DisplayName" "小狼毫輸入法"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "NoModify" 1
+  WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel" "NoRepair" 1
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Write autorun key
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "WeaselServer" "$INSTDIR\WeaselServer.exe"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "WeaselServer" "$INSTDIR\WeaselServer.exe"
   ; Start WeaselServer
   Exec "$INSTDIR\WeaselServer.exe"
 
@@ -226,9 +226,9 @@ Section "Uninstall"
   ExecWait '"$INSTDIR\WeaselSetup.exe" /u'
 
   ; Remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel"
-  DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "WeaselServer"
-  DeleteRegKey HKLM SOFTWARE\Rime
+  DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Weasel"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "WeaselServer"
+  DeleteRegKey HKCU SOFTWARE\Rime
 
   ; Remove files and uninstaller
   SetOutPath $TEMP
